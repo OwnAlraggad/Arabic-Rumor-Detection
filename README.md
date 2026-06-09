@@ -1,4 +1,4 @@
-#Arabic Misinformation(Rumor) Detection
+# Arabic Misinformation(Rumor) Detection
 
 End-to-end NLP pipeline for detecting Arabic misinformation in social media text using the ArCOV19-Rumors dataset (3.5K tweets). The project includes full data preprocessing, feature engineering, and baseline model development for binary rumor classification.
 
