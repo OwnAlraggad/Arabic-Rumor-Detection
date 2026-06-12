@@ -7,9 +7,11 @@ The system leverages engineered linguistic and contextual features combined with
 
 Key results:
 
-F1-macro: 0.867
-ROC-AUC: 0.943
-PR-AUC: 0.950
+- F1-macro:  0.8947 
+
+- ROC-AUC:   0.9502 
+
+- PR-AUC:    0.9561
 
 Tech stack: Python, Pandas, Scikit-learn, XGBoost, NLP preprocessing, Feature Engineering, Evaluation Metrics
 
