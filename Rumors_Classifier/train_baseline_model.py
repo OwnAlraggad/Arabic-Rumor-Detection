@@ -19,7 +19,6 @@ Options
   --test-size   Fraction held out for test    (default: 0.2)
   --val-size    Fraction held out for val     (default: 0.2)
   --n-estimators Max XGBoost trees            (default: 2000)
-  --run-ablation  Flag: run handcrafted-feature ablation study
   --verbose-xgb   Flag: print XGBoost per-round eval log
 
 Pipeline
@@ -29,8 +28,7 @@ Pipeline
   3. ColumnTransformer: StandardScaler (handcrafted) + TF-IDF (text)
   4. XGBClassifier with class-imbalance weight + early stopping on val
   5. Evaluation: Accuracy, F1, ROC-AUC, PR-AUC, confusion matrix
-  6. Optional ablation study (remove one handcrafted feature at a time)
-  7. Persist full pipeline + metrics to --output-dir
+  6. Persist full pipeline + metrics to --output-dir
 """
 
 import argparse
@@ -129,78 +127,6 @@ def _scale_pos_weight(y: pd.Series) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Ablation study
-# ---------------------------------------------------------------------------
-
-def run_ablation_study(
-    X_train: pd.DataFrame,
-    X_val: pd.DataFrame,
-    X_test: pd.DataFrame,
-    y_train: pd.Series,
-    y_val: pd.Series,
-    y_test: pd.Series,
-    handcrafted_cols: list,
-    seed: int,
-    n_estimators: int,
-) -> pd.DataFrame:
-    """
-    Performs leave-one-out ablation over *handcrafted_cols*.
-
-    For each feature, trains XGBoost (with early stopping) using all features
-    except the dropped one, evaluates on the test set, and records the F1 drop
-    relative to the all-features baseline.
-
-    Returns
-    -------
-    pd.DataFrame sorted by Drop_F1 descending.
-    """
-    log.info("=== Ablation study: handcrafted features ===")
-    results = []
-    spw = _scale_pos_weight(y_train)
-
-    def _train_eval(feature_subset):
-        col_transformer = _build_preprocessor(feature_subset)
-
-        train_df = X_train[feature_subset].copy()
-        train_df["normalized_text"] = X_train["normalized_text"]
-        val_df = X_val[feature_subset].copy()
-        val_df["normalized_text"] = X_val["normalized_text"]
-        test_df = X_test[feature_subset].copy()
-        test_df["normalized_text"] = X_test["normalized_text"]
-
-        X_tr = col_transformer.fit_transform(train_df)
-        X_vl = col_transformer.transform(val_df)
-        X_te = col_transformer.transform(test_df)
-
-        mdl = XGBClassifier(
-            scale_pos_weight=spw,
-            n_estimators=n_estimators,
-            random_state=seed,
-            **XGB_FIXED_PARAMS,
-        )
-        mdl.fit(X_tr, y_train, eval_set=[(X_vl, y_val)], verbose=False)
-
-        y_pred = mdl.predict(X_te)
-        return f1_score(y_test, y_pred, average="binary")
-
-    # Baseline (all features)
-    baseline_f1 = _train_eval(handcrafted_cols)
-    results.append({"Dropped_Feature": "None (Baseline)", "Test_F1": baseline_f1})
-    log.info("  Baseline F1 = %.4f", baseline_f1)
-
-    # Leave-one-out
-    for feat in handcrafted_cols:
-        subset = [f for f in handcrafted_cols if f != feat]
-        f1_val = _train_eval(subset)
-        results.append({"Dropped_Feature": feat, "Test_F1": f1_val})
-        log.info("  Without %-25s → F1 = %.4f  (drop = %+.4f)", feat, f1_val, baseline_f1 - f1_val)
-
-    df_results = pd.DataFrame(results)
-    df_results["Drop_F1"] = baseline_f1 - df_results["Test_F1"]
-    return df_results.sort_values("Drop_F1", ascending=False).reset_index(drop=True)
-
-
-# ---------------------------------------------------------------------------
 # Main training routine
 # ---------------------------------------------------------------------------
 
@@ -265,24 +191,9 @@ def train(args: argparse.Namespace) -> None:
         y_train.mean(), y_val.mean(), y_test.mean(),
     )
 
-    # ------------------------------------------------------------------
-    # 3. (Optional) ablation study
-    # ------------------------------------------------------------------
-    if args.run_ablation:
-        ablation_df = run_ablation_study(
-            X_train, X_val, X_test,
-            y_train, y_val, y_test,
-            HANDCRAFTED_COLS,
-            seed=seed,
-            n_estimators=args.n_estimators,
-        )
-        ablation_path = logs_dir / "ablation_handcrafted.csv"
-        ablation_df.to_csv(ablation_path, index=False)
-        log.info("Ablation results saved → %s", ablation_path)
-        print("\nAblation Results:\n", ablation_df.to_string(index=False))
 
     # ------------------------------------------------------------------
-    # 4. Build ColumnTransformer + XGBoost
+    # 3. Build ColumnTransformer + XGBoost
     # ------------------------------------------------------------------
     log.info("Building column transformer …")
     col_transformer = _build_preprocessor(HANDCRAFTED_COLS)
@@ -316,7 +227,7 @@ def train(args: argparse.Namespace) -> None:
     )
 
     # ------------------------------------------------------------------
-    # 5. Evaluate on test set
+    # 4. Evaluate on test set
     # ------------------------------------------------------------------
     X_test_t = col_transformer.transform(X_test)
     y_pred_proba = xgb_model.predict_proba(X_test_t)[:, 1]
@@ -418,7 +329,7 @@ def _parse_args(argv=None) -> argparse.Namespace:
     # --- Output ---
     parser.add_argument(
         "--output-dir",
-        default="Rumors_Classifier/notebooks",
+        default="Rumors_Classifier",
         help="Directory where logs/ and models/ sub-folders will be created.",
     )
 
@@ -447,12 +358,6 @@ def _parse_args(argv=None) -> argparse.Namespace:
         help="Maximum number of XGBoost boosting rounds.",
     )
 
-    # --- Flags ---
-    parser.add_argument(
-        "--run-ablation",
-        action="store_true",
-        help="Run leave-one-out ablation over handcrafted features.",
-    )
     parser.add_argument(
         "--verbose-xgb",
         action="store_true",

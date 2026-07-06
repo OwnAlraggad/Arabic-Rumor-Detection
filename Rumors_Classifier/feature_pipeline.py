@@ -286,19 +286,6 @@ def prepare_data(
 
 
 # ---------------------------------------------------------------------------
-# Backward-compatible alias (kept so existing callers don't break)
-# ---------------------------------------------------------------------------
-
-def run_full_pipeline(
-    tweets_path: Union[str, Path],
-    replies_dir: Union[str, Path],
-    retweets_dir: Union[str, Path],
-) -> pd.DataFrame:
-    """Thin wrapper around prepare_data() for backward compatibility."""
-    return prepare_data(tweets_path, replies_dir, retweets_dir)
-
-
-# ---------------------------------------------------------------------------
 # CLI entry-point
 # ---------------------------------------------------------------------------
 
