@@ -13,10 +13,74 @@ Baseline key results:
 
 - PR-AUC:    0.9561
 
-You can run "Rumors_Classifier/train_baseline_model.py" once you set up your environment to test it out. 
+You can run "Rumors_Classifier/train_baseline_model.py" once you set up your environment to test it out.
 
 Tech stack: Python, Pandas, Scikit-learn, XGBoost, NLP preprocessing, Feature Engineering, Evaluation Metrics
 
 Focus is on building a reproducible baseline pipeline with clear extensibility toward multi-class topic classification and production deployment using FastAPI.
 
 This project was inspired by JOSA’s mission to use open-source AI for social impact. I built it to demonstrate Arabic NLP skills for misinformation detection during the COVID-19 pandemic, using the ArCOV19-Rumors dataset.
+
+---
+
+## Environment Setup
+
+You can set up the environment by the following:
+
+### For Windows
+
+- Set up a Python virtual environment with a compatible version:
+```bash
+py -3.11 -m venv .venv
+```
+
+- ### Activate the virtual environment:
+
+**Command Prompt (cmd):**
+```bash
+.venv\Scripts\activate.bat
+```
+
+**PowerShell:**
+```bash
+.venv\Scripts\Activate.ps1
+```
+
+**Git Bash:**
+```bash
+source .venv/Scripts/activate
+```
+
+- ### Install the required packages:
+```bash
+uv pip install -r Requirements.txt
+```
+
+or simply:
+```bash
+pip install -r Requirements.txt
+```
+
+ـــــــــــــــــــــــــــــ
+
+### For Linux
+
+- ### Set up a Python virtual environment with a compatible version:
+```bash
+python3.11 -m venv .venv
+```
+
+- ### Activate the virtual environment:
+```bash
+source .venv/bin/activate
+```
+
+- ### Install the required packages:
+```bash
+uv pip install -r Requirements.txt
+```
+
+or simply:
+```bash
+pip install -r Requirements.txt
+```
