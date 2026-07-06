@@ -5,13 +5,15 @@ End-to-end NLP pipeline for detecting Arabic misinformation in social media text
 currently:
 The system leverages engineered linguistic and contextual features combined with classical machine learning models (XGBoost) to establish strong baseline performance. Evaluation is conducted using multiple metrics including F1-macro, ROC-AUC, and PR-AUC to handle dataset imbalance and ensure robust classification performance.
 
-Key results:
+Baseline key results:
 
 - F1-macro:  0.8947 
 
 - ROC-AUC:   0.9502 
 
 - PR-AUC:    0.9561
+
+You can run "Rumors_Classifier/train_baseline_model.py" once you set up your environment to test it out. 
 
 Tech stack: Python, Pandas, Scikit-learn, XGBoost, NLP preprocessing, Feature Engineering, Evaluation Metrics
 
